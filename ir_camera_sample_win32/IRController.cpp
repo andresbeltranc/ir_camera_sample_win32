@@ -31,10 +31,10 @@ void IRController::InitIRCamera()
     auto preferredFormat = frameSource.SupportedFormats().First().Current();
     frameSource.SetFormatAsync(preferredFormat).get();
     
-    //capElement.Stretch(Stretch::Fill);
+    capElement.Stretch(Stretch::Fill);
     //capElement.Width(preferredFormat.VideoFormat().Width());
     //capElement.Height(preferredFormat.VideoFormat().Height());
-    //capElement.Source(m_mediaCapture);
+    capElement.Source(m_mediaCapture);
     //capElement.Visibility(Visibility::Collapsed);
     //m_mediaCapture.StartPreviewAsync();
     //auto infraredTorchControl = m_mediaCapture.VideoDeviceController().InfraredTorchControl();
@@ -53,6 +53,7 @@ void IRController::InitIRCamera()
 
 void IRController::FrameArrivedHandler(const MediaFrameReader& FrameReader, const MediaFrameArrivedEventArgs& args)
 {
+    m_lock.lock();
     try
     {
         MediaFrameReference mediaFrame(nullptr);
@@ -61,23 +62,22 @@ void IRController::FrameArrivedHandler(const MediaFrameReader& FrameReader, cons
             auto vmFrame = mediaFrame.VideoMediaFrame();
             if (vmFrame != nullptr) {
                 auto irFrame = vmFrame.InfraredMediaFrame();
-                if (irFrame.IsIlluminated())
-                {
-                    auto videoFrame = irFrame.VideoMediaFrame().DepthMediaFrame();
-                    SoftwareBitmap bitmap = videoFrame.VideoMediaFrame().SoftwareBitmap();
-                    bitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8);
-                    BitmapBuffer bitmapBuffer = bitmap.LockBuffer(BitmapBufferAccessMode::Read);
-                    IMemoryBufferReference ref = bitmapBuffer.CreateReference();
-                    auto interop = ref.as<IMemoryBufferByteAccess>();
-                    uint8_t* value{};
-                    uint32_t value_size{};
-                    check_hresult(interop->GetBuffer(&value, &value_size));
-                    // do somthing with the raw frame
+                auto videoFrame = irFrame.VideoMediaFrame().DepthMediaFrame();                 
+                SoftwareBitmap bitmap = videoFrame.VideoMediaFrame().SoftwareBitmap();
+                bitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8);
+                BitmapBuffer bitmapBuffer = bitmap.LockBuffer(BitmapBufferAccessMode::Read);
+                IMemoryBufferReference ref = bitmapBuffer.CreateReference();
+                auto interop = ref.as<IMemoryBufferByteAccess>();
+                uint8_t* value{};
+                uint32_t value_size{};
+                check_hresult(interop->GetBuffer(&value, &value_size));
+                cv::Mat formated_frame = cv::Mat(vmFrame.VideoFormat().Height(), vmFrame.VideoFormat().Width(), CV_8UC4, (void*)value);
+                cv::imshow("IR Video Display", formated_frame);
+                cv::waitKey(33);
+                //if (irFrame.IsIlluminated()){}               
+                bitmap.Close();
+               
 
-
-                    //
-                    bitmap.Close();
-                }
             }
             mediaFrame.Close();
         }
@@ -86,6 +86,8 @@ void IRController::FrameArrivedHandler(const MediaFrameReader& FrameReader, cons
     {
         OutputDebugStringA("ERROR \n");
     }
+    m_lock.unlock();
+
 }
 
 void IRController::MediaCaptureErrorHandler(MediaCapture sender, MediaCaptureFailedEventArgs errorEventArgs)

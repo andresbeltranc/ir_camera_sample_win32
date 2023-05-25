@@ -24,6 +24,9 @@
 #include "winrt/Windows.storage.streams.h"
 #include "winrt/Windows.Graphics.Imaging.h"
 #include <winrt/Windows.System.Threading.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include "opencv2/highgui/highgui.hpp"
 
 using namespace winrt;
 using namespace winrt::Windows::Devices;
