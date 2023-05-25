@@ -23,5 +23,4 @@ WARNING: This project is only an example of how to access the IR Camera in the m
 # How To Run
 To Build and run this project you would need to meet the pre requirement and for opencv you would need to modify the paths of where you have the opencv folder installed.
 
-
-![ir_display](https://github.com/andresbeltranc/ir_camera_sample_win32/assets/89097527/1fcbc6fb-6faf-4445-aeb5-ed76acde7dfa)
+![ir_display](https://github.com/andresbeltranc/ir_camera_sample_win32/assets/89097527/6727d2ae-c8e2-447e-bb39-f7d9fb08d882)
